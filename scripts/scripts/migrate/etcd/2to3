@@ -96,19 +96,9 @@ def main():
     print("· Starting etcd...")
     check_output("juju run --application etcd 'service snap.etcd.etcd start'", shell=True, stderr=STDOUT)
 
-    # Configure api-extra-args on the k8s api server to use the etcd3 storage-backend.
-    # Note: This should be updated when we have the kubernetes-master storage-backend config option.
-    print("· Acquiring api-extra-args config...")
-    config = check_output('juju config --format json kubernetes-master', shell=True).decode()
-    config = json.loads(config)
-    apiExtraArgs = config['settings']['api-extra-args']['value'].split(',')
-    if '' in apiExtraArgs:
-        apiExtraArgs.remove('')
-    apiExtraArgs = [arg for arg in apiExtraArgs if not 'storage-backend' in arg]
-    apiExtraArgs += ['storage-backend=etcd3']
-    apiExtraArgs = ','.join(apiExtraArgs)
+    # Configure storage backend to etcd3.
     print("· Configuring storage-backend to etcd3...")
-    check_call("juju config kubernetes-master api-extra-args='%s'" % apiExtraArgs, shell=True)
+    check_call("juju config kubernetes-master storage-backend=etcd3", shell=True)
 
     # Wait for k8s api servers to come back online.
     print("· Waiting for all Kubernetes api servers to restart...", end='', flush=True)
